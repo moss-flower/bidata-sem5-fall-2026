@@ -1,0 +1,31 @@
+void renderCube(cuboid& cube) {
+    glPushMatrix();
+
+    glTranslatef(
+        cube.position.x,
+        cube.position.y,
+        cube.position.z
+    );
+
+    glRotatef(cube.rotation.x, 1.0f, 0.0f, 0.0f);
+    glRotatef(cube.rotation.y, 0.0f, 1.0f, 0.0f);
+    glRotatef(cube.rotation.z, 0.0f, 0.0f, 1.0f);
+
+    glScalef(
+        cube.scale.x,
+        cube.scale.y,
+        cube.scale.z
+    );
+
+    glBegin(GL_QUADS);
+    for (int i = 0; i < 24; i++) {
+        glVertex3f(
+            cube.vertices[i].x,
+            cube.vertices[i].y,
+            cube.vertices[i].z
+        );
+    }
+    glEnd();
+
+    glPopMatrix();
+}
