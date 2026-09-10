@@ -14,12 +14,26 @@ typedef struct {
     GLfloat r, g, b;
 }col3;
 
+const float DEFSIZE = 0.49f;
+
 const col3 red = {1.0f, 0.0f, 0.0f};
 const col3 green = {0.0f, 1.0f, 0.0f};
 const col3 blue = {0.0f, 0.0f, 1.0f};
 const col3 white = {1.0f, 1.0f, 1.0f};
 const col3 yellow = {1.0f, 1.0f, 0.0f};
 const col3 orange = {1.0f, 0.5f, 0.0f};
+
+enum targetPosition {
+    start,
+    middle,
+    end,
+};
+
+enum axis {
+    x,
+    y,
+    z
+};
 
 struct cuboid {
     vec3 position;
@@ -143,7 +157,7 @@ std::vector<cuboid> initCuboids() {
             for (int k = -1; k <= 1; k++) {
                 cuboids.push_back(createCuboid({
                     (GLfloat)i, (GLfloat)j, (GLfloat)k},
-                    0.4));
+                    DEFSIZE));
             }
         }
     }
@@ -160,16 +174,104 @@ void updateCamera(camera &cam) {
     gluLookAt(cam.position.x, cam.position.y, cam.position.z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 }
 
-void rotateLowerCubesTest(std::vector<cuboid> &cuboids) {
+float dot(vec3 a, vec3 b) {
+    return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
+}
+
+void rotateRow(std::vector<cuboid> &cuboids, float direction, targetPosition target) {
+    std::vector<cuboid*> selection;
+
     for (auto &cuboid : cuboids) {
-        if (cuboid.position.y < 0) {
-            GLfloat a = cuboid.position.x;
-            GLfloat b = cuboid.position.z;
-            cuboid.position.x = b;
-            cuboid.position.z = -a;
-            cuboid.rotation.y += 90.0f;
-            if (cuboid.rotation.y >= 360.0f) {
-                cuboid.rotation.y -= 360.0f;
+        switch (target) {
+            case start: {
+                if (cuboid.position.y > 0.1) {
+                    selection.push_back(&cuboid);
+                }
+                break;
+            }
+            case middle: {
+                if (cuboid.position.y < 0.1 && cuboid.position.y > -0.1) {
+                    selection.push_back(&cuboid);
+                }
+                break;
+            }
+            case end: {
+                if (cuboid.position.y < -0.1) {
+                    selection.push_back(&cuboid);
+                }
+                break;
+            }
+        }
+    }
+
+    for (auto &cuboid : selection) {
+        if (direction > 0) {
+            GLfloat a = cuboid->position.x;
+            GLfloat b = cuboid->position.z;
+            cuboid->position.x = b;
+            cuboid->position.z = -a;
+            cuboid->rotation.y += 90.0f;
+            if (cuboid->rotation.y >= 360.0f) {
+                cuboid->rotation.y -= 360.0f;
+            }
+        }
+        if (direction < 0) {
+            GLfloat a = cuboid->position.x;
+            GLfloat b = cuboid->position.z;
+            cuboid->position.x = -b;
+            cuboid->position.z = a;
+            cuboid->rotation.y -= 90.0f;
+            if (cuboid->rotation.y <= 0) {
+                cuboid->rotation.y += 360.0f;
+            }
+        }
+    }
+}
+
+void rotateColumn(std::vector<cuboid> &cuboids, float direction, targetPosition target) {
+    std::vector<cuboid*> selection;
+    for (auto &cuboid : cuboids) {
+        switch (target) {
+            case start: {
+                if (cuboid.position.x < -0.1) {
+                    selection.push_back(&cuboid);
+                    break;
+                }
+                case middle: {
+                    if (cuboid.position.x < 0.1 && cuboid.position.x > -0.1) {
+                        selection.push_back(&cuboid);
+                        break;
+                    }
+                }
+                case end: {
+                    if (cuboid.position.x > 0.1) {
+                        selection.push_back(&cuboid);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    for (auto &cuboid : selection) {
+        if (direction > 0) {
+            GLfloat a = cuboid->position.y;
+            GLfloat b = cuboid->position.z;
+            cuboid->position.y = b;
+            cuboid->position.z = -a;
+            cuboid->rotation.x += 90.0f;
+            if (cuboid->rotation.x >= 360.0f) {
+                cuboid->rotation.x -= 360.0f;
+            }
+        }
+        if (direction <= 0) {
+            GLfloat a = cuboid->position.y;
+            GLfloat b = cuboid->position.z;
+            cuboid->position.y = -b;
+            cuboid->position.z = a;
+            cuboid->rotation.x -= 90.0f;
+            if (cuboid->rotation.x <= 0) {
+                cuboid->rotation.x += 360.0f;
             }
         }
     }
@@ -238,7 +340,7 @@ int main() {
     std::vector<cuboid> cuboids = initCuboids();
 
     camera cam;
-    setCameraPosition({0,0,-5.0f}, cam);
+    setCameraPosition({3.0f,4.0f,-5.0f}, cam);
 
     while (window.isOpen()) {
         while (const auto event = window.pollEvent()) {
@@ -247,22 +349,22 @@ int main() {
             }
             if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
                 if (keyPressed->code == sf::Keyboard::Key::W) {
-                    rotateCuboid(cuboids[26], 15.0f, {1.0f,0.0, 0} );
+                    rotateColumn(cuboids, 1.0f, end);
                 }
             }
             if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
                 if (keyPressed->code == sf::Keyboard::Key::A) {
-                    rotateCuboid(cuboids[26], 15.0f, {0.0f,-1.0, 0} );
+                    rotateRow(cuboids, -1.0f, end);
                 }
             }
             if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
                 if (keyPressed->code == sf::Keyboard::Key::D) {
-                    rotateLowerCubesTest(cuboids);
+                    rotateRow(cuboids, 1.0f, end);
                 }
             }
             if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
                 if (keyPressed->code == sf::Keyboard::Key::S) {
-                    rotateCuboid(cuboids[26], 15.0f, {-1.0f,0.0, 0} );
+                    rotateColumn(cuboids, -1.0f, end);
                 }
             }
         }

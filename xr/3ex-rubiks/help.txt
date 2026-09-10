@@ -29,3 +29,19 @@ void renderCube(cuboid& cube) {
 
     glPopMatrix();
 }
+
+
+void rotateRow(std::vector<cuboid> &cuboids, float direction, float rowMask) {
+    for (auto &cuboid : cuboids) {
+        if (cuboid.position.y < 0) {
+            GLfloat a = cuboid.position.x;
+            GLfloat b = cuboid.position.z;
+            cuboid.position.x = b;
+            cuboid.position.z = -a;
+            cuboid.rotation.y += 90.0f;
+            if (cuboid.rotation.y >= 360.0f) {
+                cuboid.rotation.y -= 360.0f;
+            }
+        }
+    }
+}
