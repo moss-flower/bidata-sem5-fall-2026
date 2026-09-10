@@ -17,6 +17,9 @@ typedef struct {
 const col3 red = {1.0f, 0.0f, 0.0f};
 const col3 green = {0.0f, 1.0f, 0.0f};
 const col3 blue = {0.0f, 0.0f, 1.0f};
+const col3 white = {1.0f, 1.0f, 1.0f};
+const col3 yellow = {1.0f, 1.0f, 0.0f};
+const col3 orange = {1.0f, 0.5f, 0.0f};
 
 struct cuboid {
     vec3 position;
@@ -61,15 +64,15 @@ struct cuboid {
     };
     col3 colors[24] {
         // top
-        red, red, red, red,
+        white,white,white,white,
         //back
-        green, green, green, green,
+        blue,blue,blue,blue,
         // bottom
-        red, red, red, red,
+        yellow,yellow,yellow,yellow,
         // left
-        blue, blue, blue, blue,
+        orange, orange, orange, orange,
         //right
-        blue,blue, blue, blue,
+        red, red, red, red,
         //front
         green, green, green, green,
     };
@@ -133,6 +136,20 @@ void setCameraPosition (vec3 delta, camera &cam) {
     cam.position.z = delta.z;
 }
 
+std::vector<cuboid> initCuboids() {
+    std::vector<cuboid> cuboids;
+    for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            for (int k = -1; k <= 1; k++) {
+                cuboids.push_back(createCuboid({
+                    (GLfloat)i, (GLfloat)j, (GLfloat)k},
+                    0.4));
+            }
+        }
+    }
+    return cuboids;
+}
+
 void updateCamera(camera &cam) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -141,6 +158,21 @@ void updateCamera(camera &cam) {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     gluLookAt(cam.position.x, cam.position.y, cam.position.z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+}
+
+void rotateLowerCubesTest(std::vector<cuboid> &cuboids) {
+    for (auto &cuboid : cuboids) {
+        if (cuboid.position.y < 0) {
+            GLfloat a = cuboid.position.x;
+            GLfloat b = cuboid.position.z;
+            cuboid.position.x = b;
+            cuboid.position.z = -a;
+            cuboid.rotation.y += 90.0f;
+            if (cuboid.rotation.y >= 360.0f) {
+                cuboid.rotation.y -= 360.0f;
+            }
+        }
+    }
 }
 
 void renderCube(cuboid &cube) {
@@ -172,16 +204,7 @@ void render(camera &cam, std::vector<cuboid> &cuboids, sf::Window &window) {
     window.display();
 }
 
-std::vector<cuboid> initCuboids() {
-    std::vector<cuboid> cuboids;
-    for (int i = -1; i < 1; i++) {
-        for (int j = -1; j < 1; j++) {
-            for (int k = -1; k < 1; k++) {
-                cuboids.push_back(createCuboid({(GLfloat)i, (GLfloat)j, (GLfloat)k}, 1));
-            }
-        }
-    }
-}
+
 
 sf::Window init() {
     sf::ContextSettings settings{
@@ -210,8 +233,10 @@ int main() {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    std::vector<cuboid> cuboids;
-    cuboids.push_back(createCuboid({0,0,0.0f}, 1.0f));
+    /*std::vector<cuboid> cuboids;
+    cuboids.push_back(createCuboid({0,0,0.0f}, 1.0f));*/
+    std::vector<cuboid> cuboids = initCuboids();
+
     camera cam;
     setCameraPosition({0,0,-5.0f}, cam);
 
@@ -222,22 +247,22 @@ int main() {
             }
             if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
                 if (keyPressed->code == sf::Keyboard::Key::W) {
-                    rotateCuboid(cuboids[0], 15.0f, {1.0f,0.0, 0} );
+                    rotateCuboid(cuboids[26], 15.0f, {1.0f,0.0, 0} );
                 }
             }
             if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
                 if (keyPressed->code == sf::Keyboard::Key::A) {
-                    rotateCuboid(cuboids[0], 15.0f, {0.0f,-1.0, 0} );
+                    rotateCuboid(cuboids[26], 15.0f, {0.0f,-1.0, 0} );
                 }
             }
             if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
                 if (keyPressed->code == sf::Keyboard::Key::D) {
-                    rotateCuboid(cuboids[0], 15.0f, {0.0f,1.0, 0} );
+                    rotateLowerCubesTest(cuboids);
                 }
             }
             if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
                 if (keyPressed->code == sf::Keyboard::Key::S) {
-                    rotateCuboid(cuboids[0], 15.0f, {-1.0f,0.0, 0} );
+                    rotateCuboid(cuboids[26], 15.0f, {-1.0f,0.0, 0} );
                 }
             }
         }
