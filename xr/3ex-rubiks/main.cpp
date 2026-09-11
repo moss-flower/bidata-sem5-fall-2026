@@ -14,6 +14,10 @@ typedef struct {
     GLfloat r, g, b;
 }col3;
 
+typedef struct {
+    GLfloat x, y, z, w;
+}quaternion;
+
 const float DEFSIZE = 0.49f;
 
 const col3 red = {1.0f, 0.0f, 0.0f};
@@ -37,7 +41,7 @@ enum axis {
 
 struct cuboid {
     vec3 position;
-    vec3 rotation;
+    quaternion rotation;
     vec3 scale;
     vec3 vertices[24] {
         // top
@@ -128,7 +132,7 @@ cuboid createCuboid(vec3 position, float size) {
     cuboid cuboid;
     scaleCuboid(cuboid, size);
     translateCuboid(cuboid, position);
-    cuboid.rotation.x = 0.0f, cuboid.rotation.y = 0.0f, cuboid.rotation.z = 0.0f;
+    cuboid.rotation.x = 0.0f, cuboid.rotation.y = 0.0f, cuboid.rotation.z = 0.0f, cuboid.rotation.w = 1.0f;
     return cuboid;
 }
 
@@ -178,6 +182,44 @@ float dot(vec3 a, vec3 b) {
     return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
 }
 
+vec3 addVec3(vec3 a, vec3 b) {
+    vec3 result;
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.z = a.z + b.z;
+    return result;
+}
+
+vec3 crossVec3(vec3 a, vec3 b) {
+    vec3 result;
+    result.x = a.y * b.z - a.z * b.y;
+    result.y = a.z * b.x - a.x * b.z;
+    result.z = a.x * b.y - a.y * b.x;
+    return result;
+}
+
+vec3 quaternionToEuler(quaternion q) {
+    return vec3(q.x * q.w, q.y * q.w, q.z * q.w);
+}
+
+quaternion quaternionMultiply(quaternion q1, quaternion q2) {
+    quaternion orientation;
+    vec3 q1v = vec3(q1.x, q1.y, q1.z);
+    vec3 q2v = vec3(q2.x, q2.y, q2.z);
+    float q1w = q1.w;
+    float q2w = q2.w;
+
+    float q3w = q1w * q2w - (dot(q1v, q2v));
+    orientation.w = q3w;
+    vec3 vecAb = addVec3(quaternionToEuler(q1), quaternionToEuler(q2));
+    vec3 result = addVec3(vecAb, crossVec3(q1v, q1v));
+
+    orientation.x = result.x;
+    orientation.y = result.y;
+    orientation.z = result.z;
+    return orientation;
+}
+
 void rotateRow(std::vector<cuboid> &cuboids, float direction, targetPosition target) {
     std::vector<cuboid*> selection;
 
@@ -210,6 +252,7 @@ void rotateRow(std::vector<cuboid> &cuboids, float direction, targetPosition tar
             GLfloat b = cuboid->position.z;
             cuboid->position.x = b;
             cuboid->position.z = -a;
+            
             cuboid->rotation.y += 90.0f;
             if (cuboid->rotation.y >= 360.0f) {
                 cuboid->rotation.y -= 360.0f;
@@ -306,6 +349,9 @@ void render(camera &cam, std::vector<cuboid> &cuboids, sf::Window &window) {
     glFlush();
     window.display();
 }
+
+
+
 
 
 
