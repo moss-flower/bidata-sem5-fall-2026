@@ -285,6 +285,7 @@ void renderCube(cuboid &cube) {
     glRotatef(cube.rotation.x, 1.0f, 0.0f, 0.0f);
     glRotatef(cube.rotation.y, 0.0f, 1.0f, 0.0f);
     glRotatef(cube.rotation.z, 0.0f, 0.0f, 1.0f);
+
     glScalef(cube.scale.x, cube.scale.y, cube.scale.z);
 
     glBegin(GL_QUADS);
